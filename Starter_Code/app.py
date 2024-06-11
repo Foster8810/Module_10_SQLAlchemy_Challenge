@@ -63,8 +63,7 @@ def precipitation():
     past_year_results = []
     for date, prcp in results:
         last_year_results = {}
-        last_year_results['date'] = date
-        last_year_results['prcp'] = prcp
+        last_year_results[date] = prcp
         past_year_results.append(last_year_results)
 
     return jsonify(past_year_results)
@@ -91,18 +90,19 @@ def stations():
 @app.route('/api/v1.0/tobs')
 def tobs():
     session = Session(engine)
-
-    results = session.query(measurement.date, measurement.tobs).all()
+    most_active_stations = session.query(measurement.station, func.count(measurement.station)).group_by(measurement.station).order_by(func.count(measurement.station).desc()).all()
+    most_active = most_active_stations[0][0]
+    last_year_start = dt.datetime.strptime('2017-08-23', '%Y-%m-%d') - dt.timedelta(days=365)
+    results = session.query(measurement.date, measurement.tobs).filter(measurement.date >= last_year_start).filter(measurement.station == most_active).all()
     session.close
 
-    rain = []
+    temp = []
     for date, tobs in results:
         date_dict = {}
-        date_dict['date'] = date
-        date_dict['temp'] = tobs
-        rain.append(date_dict)
+        date_dict[date] = tobs
+        temp.append(date_dict)
 
-    return jsonify(rain)
+    return jsonify(temp)
 
 @app.route('/api/v1.0/2016-12-31')
 def start():
