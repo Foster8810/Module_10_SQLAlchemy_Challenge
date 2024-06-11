@@ -46,8 +46,8 @@ def welcome():
            f'/api/v1.0/precipitation<br/>'
            f'/api/v1.0/stations<br/>'
            f'/api/v1.0/tobs<br/>'
-           f'/api/v1.0/2016-12-31<br/>'
-           f'/api/v1.0/2012-06-15/2012-09-30')
+           f'/api/v1.0/<start><br/>'
+           f'/api/v1.0/<start>/<end>')
 
 
 @app.route('/api/v1.0/precipitation')
@@ -104,15 +104,14 @@ def tobs():
 
     return jsonify(temp)
 
-@app.route('/api/v1.0/2016-12-31')
-def start():
+@app.route('/api/v1.0/<start>')
+def start(start):
     session = Session(engine)
-    start_date = dt.datetime.strptime('2016-12-31', '%Y-%m-%d')
+    start_date = dt.datetime.strptime(start, '%Y-%m-%d')
 
-    results = session.query(func.min(measurement.tobs),func.max(measurement.tobs), func.avg(measurement.tobs)).filter(measurement.date > start_date).all()
+    results = session.query(func.min(measurement.tobs),func.max(measurement.tobs), func.avg(measurement.tobs)).filter(measurement.date >= start_date).all()
 
     session.close()
-
     start_tobs = []
     for min, max, avg in results:
         start_dict = {}
@@ -123,11 +122,11 @@ def start():
 
     return jsonify(start_tobs)
 
-@app.route('/api/v1.0/2012-06-15/2012-09-30')
-def start_end():
+@app.route('/api/v1.0/<start>/<end>')
+def start_end(start,end):
     session = Session(engine)
-    start_date = dt.datetime.strptime('2012-06-15','%Y-%m-%d')
-    end_date = dt.datetime.strptime('2012-09-30','%Y-%m-%d')
+    start_date = dt.datetime.strptime(start,'%Y-%m-%d')
+    end_date = dt.datetime.strptime(end,'%Y-%m-%d')
 
     results = session.query(func.min(measurement.tobs),func.max(measurement.tobs), func.avg(measurement.tobs)).filter(measurement.date >= start_date).filter(measurement.date <end_date).all()
     start_end_list = []
